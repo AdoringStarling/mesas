@@ -152,7 +152,7 @@ card_explication_sem=dbc.Card(
     ]))
 # App layout
 app = Dash(__name__, prevent_initial_callbacks=True) # this was introduced in Dash version 1.12.0
-
+server = app.server
 # Sorting operators (https://dash.plotly.com/datatable/filtering)
 header=     html.Div(
 
