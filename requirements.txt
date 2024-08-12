@@ -1,10 +1,8 @@
-pandas
-numpy
-matplotlib
-scikit-learn
-tensorflow
-plotly
-notebook
-jupyterlab
+dash==2.13.0
+plotly==5.17.0
+pandas==2.1.0
+numpy==1.25.2
+koboextractor==0.2.1
+dash-bootstrap-components==1.5.0
 openpyxl
-seaborn
+gunicorn
