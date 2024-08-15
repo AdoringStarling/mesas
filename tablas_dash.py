@@ -18,7 +18,8 @@ import numpy as np
 def dict_to_text(x):
     tx=''
     try:
-        for i in list(x[0].values()):
+        for i in x:
+            i = list(i.values())[0]
             tx=tx+i+'\n'
         return tx
     except:
