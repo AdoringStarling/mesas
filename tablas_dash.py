@@ -14,6 +14,33 @@ import plotly.express as px
 import dash_bootstrap_components as dbc
 import numpy as np
 
+#Funciones
+def dict_to_text(x):
+    tx=''
+    try:
+        for i in list(x[0].values()):
+            tx=tx+i+'\n'
+        return tx
+    except:
+        return tx
+
+def change_names(x):
+    try:
+        names=str(x).split(' ')
+        namesx=[replace_dict[letter] for letter in names]
+        namx=''
+        for stringss in namesx:
+            try:
+                stringss.replace('<br>','')
+            except:
+                pass
+            namx=namx+'\n'+stringss
+        return namx
+    except:
+        return(str(x))
+
+#Fin funciones
+
 #Replace start
 replace=pd.read_excel('aux1/diccionario_mesas.xlsx',sheet_name='choices') #Palabras de reemplazo
 replace_1=replace[np.isin(replace['list_name'],replace['list_name'].unique()[0:5])]# Palabras de reemplazo iniciales
@@ -37,7 +64,10 @@ df = pd.json_normalize(data['results'])
 # preview your data -- this step is not compulsory 
 #df.head()
 #print(df.columns)
-df = df[['Tipo_Reporte/Tipo_de_Reporte',
+df=df.replace(replace_dict)
+df_esp=df[df['Tipo_Reporte/Tipo_de_Reporte']=='Espacios de Diálogo Social']
+df_mes=df[df['Tipo_Reporte/Tipo_de_Reporte']!='Espacios de Diálogo Social']
+df_esp = df_esp[['Tipo_Reporte/Tipo_de_Reporte',
          'Tipo_Reporte/Subsector_que_genera_el_tipo_d',
          'Tipo_Reporte/Fecha_de_Registro_Seguimiento',
          'Tipo_Reporte/Nombre_de_quien_diligencia_el_reporte',
@@ -55,7 +85,7 @@ df = df[['Tipo_Reporte/Tipo_de_Reporte',
          'group_ke65b09/Durante_el_espacio_se_adquirie',
          'group_ke65b09/Principales_Compromisos_y_Responsables',
          ]]
-df.columns = ('Tipo de Reporte',
+df_esp.columns = ('Tipo de Reporte',
                 'Sector del reporte',
                 'Fecha de ocurrencia',
                 'Nombre de quien diligenció',
@@ -73,23 +103,48 @@ df.columns = ('Tipo de Reporte',
                 '¿Se adquirieron compromisos?',
                 'Principales compromisos y Responsables')
 
-def change_names(x):
-    try:
-        names=str(x).split(' ')
-        namesx=[replace_dict[letter] for letter in names]
-        namx=''
-        for stringss in namesx:
-            try:
-                stringss.replace('<br>','')
-            except:
-                pass
-            namx=namx+'\n'+stringss
-        return namx
-    except:
-        return(str(x))
-    
-df=df.replace(replace_dict)
-df['Actores Sociales y Económicos']=df['Actores Sociales y Económicos'].apply(lambda x:change_names(x))
+df_mes = df_mes[[
+    'Tipo_Reporte/Tipo_de_Reporte',
+    'Tipo_Reporte/Subsector_que_genera_el_tipo_d',
+    'Tipo_Reporte/Fecha_de_Registro_Seguimiento',
+    'Tipo_Reporte/Nombre_de_quien_diligencia_el_reporte',
+    'Tipo_Reporte/Correo_electr_nico_d_iligencia_el_reporte',
+    'Mesas/Nombre_de_la_Mesa',
+    'Mesas/Tipo_de_Mesa',
+    'Mesas/departamento_L',
+    'Mesas/municipio_L',
+    'Mesas/Objetivo_de_la_Mesa',
+    'Mesas/Instituciones_Entidades_que_pa',
+    'Mesas/Datos_de_Contacto_de_delegados_al_espacio',
+    'Mesas/Compromisos_mesas',
+    'Mesas/Observaciones_001',
+    'Mesas/Entidad_l_der_de_la_mesa',
+    'Mesas/Compromisos',
+    'Mesas/Actores_Sociales_Econ_micos_qu_001'
+         ]]
+df_mes.columns = (
+    'Tipo de Reporte',
+    'Sector del reporte',
+    'Fecha de ocurrencia',
+    'Nombre de quien diligenció',
+    'Correo electrónico de quien reporta',
+    'Nombre de la Mesa',
+    'Tipo de Mesa',
+    'Departamento',
+    'Municipio',
+    'Objetivo',
+    'Instituciones/Entidades que participan',
+    'Datos de Contacto de delegados al espacio',
+    'Compromisos 1',
+    'Observaciones',
+    'Entidad líder de la mesa',
+    'Compromisos 2',
+    'Actores Sociales/Económicos que participan')
+
+df_esp['Actores Sociales y Económicos']=df_esp['Actores Sociales y Económicos'].apply(lambda x:change_names(x))
+df_mes['Instituciones/Entidades que participan']=df_mes['Instituciones/Entidades que participan'].apply(lambda x:change_names(x))
+df_mes['Actores Sociales/Económicos que participan']=df_mes['Actores Sociales/Económicos que participan'].apply(lambda x:change_names(x))
+df_mes['Compromisos 1']=df_mes['Compromisos 1'].apply(lambda x:dict_to_text(x))
     
 from dash import Dash, dash_table, dcc, html, Input, Output, callback, State
 import pandas as pd
@@ -205,17 +260,97 @@ app.layout = html.Div([
         "fontSize": "1.2em",
         'font-family':'Nunito Sans',
         'color':'black',}),
+    html.H1('Espacios de Dialogo',
+                style={
+                        "fontSize": "3em",
+                        'font-family':'Nunito Sans',
+                        'color':'black',}
+            ),
     html.Div([
     dash_table.DataTable(
 
-        id='datatable-interactivity',
+        id='datatable-interactivity1',
         columns=[
             {"name": i, "id": i, "deletable": False, "selectable": True, "hideable": True}
             if i == "iso_alpha3" or i == "year" or i == "id"
             else {"name": i, "id": i, "deletable": True, "selectable": True}
-            for i in df.columns
+            for i in df_esp.columns
         ],
-        data=df.to_dict('records'),  # the contents of the table
+        data=df_esp.to_dict('records'),  # the contents of the table
+        editable=True,              # allow editing of data inside all cells
+        filter_action="native",     # allow filtering of data by user ('native') or not ('none')
+        sort_action="native",       # enables data to be sorted per-column by user or not ('none')
+        sort_mode="single",         # sort across 'multi' or 'single' columns
+        column_selectable="multi",  # allow users to select 'multi' or 'single' columns
+        row_selectable="multi",     # allow users to select 'multi' or 'single' rows
+        row_deletable=True,         # choose if user can delete a row (True) or not (False)
+        selected_columns=[],        # ids of columns that user selects
+        selected_rows=[],           # indices of rows that user selects
+        page_action="native",       # all data is passed to the table up-front or not ('none')
+        page_current=0,             # page number that user is on
+        page_size=150,               # number of rows visible per page
+
+        style_table={
+                    'overflowY': 'scroll',
+                    'overflowX': 'scroll',
+                    'maxWidth':'99%',
+                },
+        style_cell={                # ensure adequate header width when text is shorter than cell's text
+            # 'minWidth': 70, 
+            # 'maxWidth': 500, 
+            # 'width': 70,
+            'textAlign': 'left',
+            # 'backgroundColor': 'rgb(30, 30, 30)',
+            'color': 'white',
+            'font-family':'Nunito Sans',
+            'font-size': '13px',
+            "whiteSpace": "pre-line",
+            'maxWidth': '600px',
+            'minWidth': '180px',
+        },
+        style_cell_conditional=[    # align text columns to left. By default they are aligned to right
+            {
+                'if': {'column_id': c},
+                'textAlign': 'center'
+            } for c in ['Nombre de quien diligenció', 'Departamento']
+        ],
+        style_header={
+            'backgroundColor': '#edb600',
+            'fontWeight': 'bold',
+            'color': 'black',
+        },
+        style_data={                # overflow cells' content into multiple lines
+            'whiteSpace': 'normal',
+            'height': 'auto',
+            'color': 'black',
+            'backgroundColor': '#DDD0B4'
+        },
+        fixed_rows={'headers': True},
+    ),
+
+    # html.Br(),
+    # html.Br(),
+    # html.Div(id='bar-container'),
+    # html.Div(id='choromap-container'),
+
+],className="model_table_search"),
+    
+    html.H1('Mesas',
+            style={
+        "fontSize": "3em",
+        'font-family':'Nunito Sans',
+        'color':'black',}),
+    html.Div([
+    dash_table.DataTable(
+
+        id='datatable-interactivity2',
+        columns=[
+            {"name": i, "id": i, "deletable": False, "selectable": True, "hideable": True}
+            if i == "iso_alpha3" or i == "year" or i == "id"
+            else {"name": i, "id": i, "deletable": True, "selectable": True}
+            for i in df_mes.columns
+        ],
+        data=df_mes.to_dict('records'),  # the contents of the table
         editable=True,              # allow editing of data inside all cells
         filter_action="native",     # allow filtering of data by user ('native') or not ('none')
         sort_action="native",       # enables data to be sorted per-column by user or not ('none')
@@ -429,8 +564,18 @@ app.callback(
 # -------------------------------------------------------------------------------------
 # Highlight selected column
 @app.callback(
-    Output('datatable-interactivity', 'style_data_conditional'),
-    [Input('datatable-interactivity', 'selected_columns')]
+    Output('datatable-interactivity1', 'style_data_conditional'),
+    [Input('datatable-interactivity1', 'selected_columns')]
+)
+def update_styles(selected_columns):
+    return [{
+        'if': {'column_id': i},
+        'background_color': '#D2F3FF'
+    } for i in selected_columns]
+
+@app.callback(
+    Output('datatable-interactivity2', 'style_data_conditional'),
+    [Input('datatable-interactivity2', 'selected_columns')]
 )
 def update_styles(selected_columns):
     return [{
